@@ -2,10 +2,7 @@ import * as Discord from "discord.js";
 import * as Dotenv from "dotenv";
 import config from "./config.js";
 
-const ADMINS = new Set([
-  "820234173574938635", // rinderpest
-  "1346147093584019467", // chiptumor
-]);
+const ADMINS = new Set(config.admins);
 
 Dotenv.config();
 
@@ -28,10 +25,12 @@ client.on("messageCreate", message => {
 });
 
 client.on("interactionCreate", async i => {
-  i.deferReply({ flags: Discord.MessageFlags.Ephemeral });
+  await i.deferReply({
+    // flags: Discord.MessageFlags.Ephemeral
+  });
 
   if (!ADMINS.has(i.user.id)) {
-    i.editReply("go eat a poop bro who do you think you are");
+    await i.editReply("go eat a poop bro who do you think you are");
     return;
   }
 
@@ -39,11 +38,11 @@ client.on("interactionCreate", async i => {
     case "open-channel":
       const deleteMessages = i.options.getBoolean("deletemessages") ?? true;
       await openChannel(deleteMessages);
-      i.editReply(`opened ${channel}`);
+      await i.editReply(`opened ${channel}`);
       break;
     case "close-channel":
       await setPermissions(false);
-      i.editReply(`closed ${channel}`);
+      await i.editReply(`closed ${channel}`);
       break;
   }
 });
