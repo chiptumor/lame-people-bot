@@ -5,6 +5,7 @@ import config from "./config.js";
 const ADMINS = new Set(config.admins);
 
 Dotenv.config();
+  // allows access to the secret file with secrets like the login token
 
 const client = new Discord.Client({ intents: [
   Discord.GatewayIntentBits.Guilds,
@@ -25,10 +26,9 @@ client.on("messageCreate", message => {
 });
 
 client.on("interactionCreate", async i => {
-  await i.deferReply({
-    // flags: Discord.MessageFlags.Ephemeral
-  });
+  await i.deferReply();
 
+  // prevent non-admins from using commands
   if (!ADMINS.has(i.user.id)) {
     await i.editReply("go eat a poop bro who do you think you are");
     return;
@@ -41,15 +41,14 @@ client.on("interactionCreate", async i => {
       await i.editReply(`opened ${channel}`);
       break;
     case "close-channel":
-      await setPermissions(false);
+      await closeChannel();
       await i.editReply(`closed ${channel}`);
       break;
   }
 });
 
 async function initial(message) {
-  await setPermissions(false);
-  console.log("closed channel")
+  await closeChannel();
   const tf = config.timeFrame;
   const time = tf.min + (Math.random() * (tf.max - tf.min));
   setTimeout(() => openChannel(true), time);
@@ -61,7 +60,12 @@ async function openChannel(deleteMessages) {
   }
 
   await setPermissions(null);
-  console.log("opened channel");
+  console.log("+ opened channel");
+}
+
+async function closeChannel() {
+  await setPermissions(false);
+  console.log("- closed channel");
 }
 
 async function setPermissions(state) {
