@@ -1,0 +1,16 @@
+{
+  "type": "module",
+  "name": "lame-people-bot",
+  "version": "0.1.0",
+  "description": "Bot that opens #one-message periodically",
+  "main": "./src/index.js",
+  "scripts": {
+    "start": "node ./src/index.js",
+    "setup": "node ./src/commands.js",
+    "restart": "npm run setup\nnpm run start"
+  },
+  "dependencies": {
+    "discord.js": "^14.28.1",
+    "dotenv": "^18.0.10"
+  }
+}
