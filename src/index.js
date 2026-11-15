@@ -26,7 +26,9 @@ client.on("messageCreate", message => {
 });
 
 client.on("interactionCreate", async i => {
-  await i.deferReply();
+  await i.deferReply({ flags:
+    i.channelId === channelId ? Discord.MessageFlags.Ephemeral : 0
+  });
 
   // prevent non-admins from using commands
   if (!ADMINS.has(i.user.id)) {
@@ -47,11 +49,17 @@ client.on("interactionCreate", async i => {
   }
 });
 
+let timeout;
+function cancelDelay() {
+  if (timeout) clearTimeout(timeout);
+  timeout = null;
+}
+
 async function initial(message) {
   await closeChannel();
   const tf = config.timeFrame;
   const time = tf.min + (Math.random() * (tf.max - tf.min));
-  setTimeout(() => openChannel(true), time);
+  timeout = setTimeout(() => openChannel(true), time);
 }
 
 async function openChannel(deleteMessages) {
@@ -59,6 +67,7 @@ async function openChannel(deleteMessages) {
     await channel.bulkDelete(25, true).catch(console.error)
   }
 
+  cancelDelay();
   await setPermissions(null);
   console.log("+ opened channel");
 }
@@ -69,7 +78,7 @@ async function closeChannel() {
 }
 
 async function setPermissions(state) {
-  await channel.permissionOverwrites.create(channel.guild.roles.everyone, {
+  await channel.permissionOverwrites.edit(channel.guild.roles.everyone, {
     SendMessages: state
   });
 }
