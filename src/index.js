@@ -17,7 +17,7 @@ await client.login(process.env.TOKEN);
 const channelId = config.channelId;
 const channel = await client.channels.fetch(channelId);
 
-let finalFunction = initial;
+let finalFunction = closeChannel;
 
 client.on("messageCreate", message => {
   if (message.channelId !== channelId) return;
@@ -55,13 +55,6 @@ function cancelDelay() {
   timeout = null;
 }
 
-async function initial(message) {
-  await closeChannel();
-  const tf = config.timeFrame;
-  const time = tf.min + (Math.random() * (tf.max - tf.min));
-  timeout = setTimeout(() => openChannel(true), time);
-}
-
 async function openChannel(deleteMessages) {
   if (deleteMessages) {
     await channel.bulkDelete(25, true).catch(console.error)
@@ -72,9 +65,14 @@ async function openChannel(deleteMessages) {
   console.log("+ opened channel");
 }
 
-async function closeChannel() {
+async function closeChannel(andOpen = false) {
   await setPermissions(false);
   console.log("- closed channel");
+  if (andOpen) {
+    const tf = config.timeFrame;
+    const time = tf.min + (Math.random() * (tf.max - tf.min));
+    timeout = setTimeout(() => openChannel(true), time);
+  }
 }
 
 async function setPermissions(state) {
