@@ -22,6 +22,12 @@ const commands = [
   {
     name: "close-channel",
     description: "Close #one-message",
+    options: [{
+      name: "reopenlater",
+      description: "Whether to reopen the channel later as normal (default: true)",
+      type: Discord.ApplicationCommandOptionType.Boolean,
+      required: false
+    }],
     ...commandConfig
   }
 ];

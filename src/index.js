@@ -38,12 +38,15 @@ client.on("interactionCreate", async i => {
 
   switch (i.commandName) {
     case "open-channel":
-      const deleteMessages = i.options.getBoolean("deletemessages") ?? true;
-      await openChannel(deleteMessages);
+      await openChannel(
+        i.options.getBoolean("deletemessages") ?? true
+      );
       await i.editReply(`opened ${channel}`);
       break;
     case "close-channel":
-      await closeChannel();
+      await closeChannel(
+        i.options.getBoolean("reopenlater") ?? true
+      );
       await i.editReply(`closed ${channel}`);
       break;
   }
@@ -65,10 +68,10 @@ async function openChannel(deleteMessages) {
   console.log("+ opened channel");
 }
 
-async function closeChannel(andOpen = false) {
+async function closeChannel(reopenLater = false) {
   await setPermissions(false);
   console.log("- closed channel");
-  if (andOpen) {
+  if (reopenLater) {
     const tf = config.timeFrame;
     const time = tf.min + (Math.random() * (tf.max - tf.min));
     timeout = setTimeout(() => openChannel(true), time);
