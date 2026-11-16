@@ -17,7 +17,7 @@ await client.login(process.env.TOKEN);
 const channelId = config.channelId;
 const channel = await client.channels.fetch(channelId);
 
-let finalFunction = closeChannel;
+let finalFunction = () => closeChannel(true);
 
 client.on("messageCreate", message => {
   if (message.channelId !== channelId) return;
@@ -52,6 +52,14 @@ client.on("interactionCreate", async i => {
   }
 });
 
+async function onmessage(message) {
+  Discord.Message.prototype.content
+  console.log(`  ${message.author} sent ${message.content
+    ? `"${message.content}"`
+    : "the one message"}`);
+  closeChannel();
+}
+
 let timeout;
 function cancelDelay() {
   if (timeout) clearTimeout(timeout);
@@ -68,6 +76,11 @@ async function openChannel(deleteMessages) {
   console.log("+ opened channel");
 }
 
+const dtf = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/Chicago",
+  timeStyle: "short"
+});
+
 async function closeChannel(reopenLater = false) {
   await setPermissions(false);
   console.log("- closed channel");
@@ -75,6 +88,7 @@ async function closeChannel(reopenLater = false) {
     const tf = config.timeFrame;
     const time = tf.min + (Math.random() * (tf.max - tf.min));
     timeout = setTimeout(() => openChannel(true), time);
+    console.log("  opens at " + dtf.format(Date.now() + time));
   }
 }
 
