@@ -1,8 +1,6 @@
 import * as Discord from "discord.js";
 import * as Dotenv from "dotenv";
-import config from "./config.js";
-
-const ADMINS = new Set(config.admins);
+import CONFIG from "./config.js";
 
 Dotenv.config();
   // allows access to the secret file with secrets like the login token
@@ -14,7 +12,8 @@ const client = new Discord.Client({ intents: [
 
 await client.login(process.env.TOKEN);
 
-const channelId = config.channelId;
+const [[channelId, config]] = CONFIG;
+const admins = new Set(config.admins);
 const channel = await client.channels.fetch(channelId);
 
 let finalFunction = () => closeChannel(true);
