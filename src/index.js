@@ -12,12 +12,22 @@ const client = new Discord.Client({ intents: [
 
 await client.login(process.env.TOKEN);
 
-for (const [channelId, config] of Object.entries(CONFIG)) {
-  const admins = new Set(config.admins);
-  const channel = await client.channels.fetch(channelId);
-  const guild = channel.guild;
+for (const entry of Object.entries(CONFIG)) {
+  start(entry);
+}
 
-  let finalFunction = () => closeChannel(true);
+async function start([channelId, config]) {
+  let channel;
+  try {
+    channel = await client.channels.fetch(channelId);
+  } catch {
+    print(`Can't access channel at "${channelId}"`);
+    return;
+  }
+  const guild = channel.guild;
+  const admins = new Set(config.admins);
+
+  let finalFunction = (m) => onMessage(m);
 
   client.on("messageCreate", message => {
     if (message.channelId !== channelId) return;
@@ -26,7 +36,7 @@ for (const [channelId, config] of Object.entries(CONFIG)) {
   });
 
   client.on("interactionCreate", async i => {
-    if (message.guildId !== guild.id) return;
+    if (i.guildId !== guild.id) return;
     
     await i.deferReply({ flags:
       i.channelId === channelId ? Discord.MessageFlags.Ephemeral : 0
@@ -54,12 +64,17 @@ for (const [channelId, config] of Object.entries(CONFIG)) {
     }
   });
 
-  async function onmessage(message) {
-    Discord.Message.prototype.content
-    print(`  ${message.author} sent ${message.content
-      ? `"${message.content}"`
+  async function onMessage(msg) {
+    print(`  ${msg.author} sent ${msg.content
+      ? `"${msg.content}"`
       : "the one message"}`);
     closeChannel();
+    const member = await guild.members.fetch(msg.author.id);
+    try {
+      await member.roles.add(config.role);
+    } catch (error) {
+      print(`Couldn't assign role "${config.role}" to member "${msg.author.id}"`);
+    }
   }
 
   let timeout;
@@ -69,11 +84,11 @@ for (const [channelId, config] of Object.entries(CONFIG)) {
   }
 
   async function openChannel(deleteMessages) {
+    cancelDelay();
+
     if (deleteMessages) {
       await channel.bulkDelete(25, true).catch(console.error)
     }
-
-    cancelDelay();
     await setPermissions(null);
     print("+ opened channel");
   }
@@ -84,6 +99,7 @@ for (const [channelId, config] of Object.entries(CONFIG)) {
   });
 
   async function closeChannel(reopenLater = false) {
+    cancelDelay();
     await setPermissions(false);
     print("- closed channel");
     if (reopenLater) {
