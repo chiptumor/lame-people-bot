@@ -27,14 +27,6 @@ async function start([channelId, config]) {
   const guild = channel.guild;
   const admins = new Set(config.admins);
 
-  let finalFunction = (m) => onMessage(m);
-
-  client.on("messageCreate", message => {
-    if (message.channelId !== channelId) return;
-
-    finalFunction(message);
-  });
-
   client.on("interactionCreate", async i => {
     if (i.guildId !== guild.id) return;
     
@@ -64,6 +56,34 @@ async function start([channelId, config]) {
     }
   });
 
+  let finalFunction = (m) => onMessage(m);
+  let timeout;
+
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    timeStyle: "short"
+  });
+
+  while (true) {
+    let messages;
+    
+    try {
+      messages = await channel.awaitMessages({
+        dispose: true,
+        max: 1,
+        time: 1000 * 60 * 60 * 12,
+        errors: [ "time" ]
+      });
+    } catch (error) {
+      print(`caught awaitMessages error: [${
+        Discord.DiscordjsErrorCodes[error.code]
+      }] ${error.message}`);
+      continue;
+    }
+    
+    finalFunction(messages.at(0));
+  }
+
   async function onMessage(msg) {
     print(`  ${msg.author} sent ${msg.content
       ? `"${msg.content}"`
@@ -76,8 +96,6 @@ async function start([channelId, config]) {
       print(`Couldn't assign role "${config.role}" to member "${msg.author.id}"`);
     }
   }
-
-  let timeout;
   function cancelDelay() {
     if (timeout) clearTimeout(timeout);
     timeout = null;
@@ -92,11 +110,6 @@ async function start([channelId, config]) {
     await setPermissions(null);
     print("+ opened channel");
   }
-
-  const dtf = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/Chicago",
-    timeStyle: "short"
-  });
 
   async function closeChannel(reopenLater = false) {
     cancelDelay();
